@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <link rel="icon" href="{{ url_for('static', filename='favicon.jpg') }}" type="image/jpeg" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>⚡ 3007X | SMS Control Center</title>
+    <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --bg-dark: #07090e;
+            --card-glass: rgba(18, 22, 33, 0.75);
+            --neon-blue: #00f2fe;
+            --neon-purple: #9d4edd;
+            --neon-red: #ff3366;
+            --text-main: #ffffff;
+            --text-dim: #8b9bb4;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            /* มิติแสงสะท้อนเบื้องหลังแบบนุ่มนวล */
+            background-image: 
+                radial-gradient(circle at 10% 30%, rgba(0, 242, 254, 0.06) 0%, transparent 45%),
+                radial-gradient(circle at 90% 70%, rgba(157, 78, 221, 0.06) 0%, transparent 45%);
+            color: var(--text-main);
+            font-family: 'Inter', 'Chakra Petch', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+        }
+
+        /* --- เทคนิคแอนิเมชันเปิดหน้าจอโหลดเข้าแผงควบคุม --- */
+        @keyframes containerEntrance {
+            from { opacity: 0; transform: translateY(24px) scale(0.98); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        .panel {
+            background: var(--card-glass);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 24px;
+            padding: 30px;
+            width: 100%;
+            max-width: 460px;
+            box-shadow: 0 30px 60px -15px rgba(0, 0, 0, 0.6);
+            animation: containerEntrance 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        /* --- ส่วนหัวข้อเว็บแบรนด์ครีเอเตอร์ --- */
+        h2 {
+            font-family: 'Chakra Petch', sans-serif;
+            font-size: 2.2rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            background: linear-gradient(135deg, var(--neon-blue), var(--neon-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 6px;
+            text-shadow: 0 0 30px rgba(0, 242, 254, 0.1);
+        }
+
+        .panel-desc {
+            color: var(--text-dim);
+            font-size: 0.85rem;
+            letter-spacing: 0.5px;
+            margin-bottom: 25px;
+        }
+
+        /* --- รูปแบบช่องกรอกข้อมูลสุดล้ำ --- */
+        .input-wrapper {
+            position: relative;
+            margin-bottom: 16px;
+        }
+
+        input {
+            width: 100%;
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            color: white;
+            padding: 15px 16px;
+            font-size: 1rem;
+            font-family: 'Inter', sans-serif;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        input:focus {
+            border-color: var(--neon-blue);
+            box-shadow: 0 0 16px rgba(0, 242, 254, 0.15);
+            background: rgba(0, 0, 0, 0.55);
+        }
+
+        /* --- แผงปุ่มสั่งการแยกสามโหมด (Segmented Controls) --- */
+        .btn-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        @media (min-width: 400px) {
+            .btn-group { flex-direction: row; }
+        }
+
+        button {
+            flex: 1;
+            padding: 14px;
+            font-family: 'Chakra Petch', sans-serif;
+            font-size: 0.95rem;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            color: #07090e;
+            transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease, opacity 0.2s;
+        }
+
+        button:active { transform: scale(0.96); }
+
+        .fast { background: linear-gradient(135deg, var(--neon-blue), #0078ff); box-shadow: 0 4px 15px rgba(0, 242, 254, 0.2); }
+        .super { background: linear-gradient(135deg, #b5179e, var(--neon-purple)); box-shadow: 0 4px 15px rgba(157, 78, 221, 0.2); color: white; }
+        .slow { background: linear-gradient(135deg, #ff5f6d, var(--neon-red)); box-shadow: 0 4px 15px rgba(255, 51, 102, 0.2); color: white; }
+
+        /* --- เทอร์มินอลแสดงบันทึกแบบเรียลไทม์ --- */
+        #log-container {
+            margin-top: 22px;
+            background: rgba(0, 0, 0, 0.6);
+            color: #00ff66;
+            font-family: 'Courier New', monospace;
+            padding: 16px;
+            height: 160px;
+            overflow-y: auto;
+            border-radius: 12px;
+            text-align: left;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            font-size: 11.5px;
+            line-height: 1.5;
+            white-space: pre-wrap;
+            scrollbar-width: thin;
+        }
+
+        /* --- กริดข้อมูลบอกรายละเอียดฟังก์ชัน --- */
+        .info-header { 
+            margin-top: 28px; 
+            margin-bottom: 12px; 
+            font-size: 0.8rem; 
+            color: var(--text-dim); 
+            text-transform: uppercase; 
+            letter-spacing: 1.5px;
+            font-weight: 600;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 12px;
+            text-align: left;
+        }
+
+        .info-box {
+            background: rgba(0, 0, 0, 0.25);
+            padding: 14px;
+            border-radius: 14px;
+            font-size: 0.8rem;
+            color: var(--text-dim);
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            line-height: 1.5;
+            transition: transform 0.3s ease, border-color 0.3s ease;
+        }
+        
+        .info-box:hover {
+            transform: translateY(-2px);
+        }
+
+        .info-box h3 { margin-bottom: 6px; font-size: 0.95rem; color: #fff; font-family: 'Chakra Petch', sans-serif; }
+        .info-box.i-fast:hover { border-color: var(--neon-blue); }
+        .info-box.i-super:hover { border-color: var(--neon-purple); }
+        .info-box.i-slow:hover { border-color: var(--neon-red); }
+
+        .badge { display: inline-block; padding: 3px 6px; border-radius: 6px; font-size: 10px; font-weight: 700; margin-bottom: 8px;}
+        .risk-high { background: rgba(255, 51, 102, 0.12); color: #ff5577; }
+        .risk-med { background: rgba(157, 78, 221, 0.15); color: #d896ff; }
+        .risk-low { background: rgba(0, 255, 102, 0.08); color: #55ff99; }
+
+        /* --- สัญลักษณ์เครดิตนักพัฒนาซอฟต์แวร์ --- */
+        .credit-footer {
+            margin-top: 25px;
+            font-size: 0.75rem;
+            color: rgba(255, 255, 255, 0.2);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+
+        @keyframes pulseGlow {
+            0% { text-shadow: 0 0 10px rgba(0, 242, 254, 0.2); }
+            50% { text-shadow: 0 0 20px rgba(0, 242, 254, 0.6); color: #fff; }
+            100% { text-shadow: 0 0 10px rgba(0, 242, 254, 0.2); }
+        }
+
+        .credit-footer span {
+            color: var(--neon-blue);
+            font-weight: 700;
+            animation: pulseGlow 2.5s infinite ease-in-out;
+        }
+    </style>
+</head>
+<body>
+
+<div class="panel">
+    <h2>3007X Panel</h2>
+    <p class="panel-desc">SMS PERFORMANCE TESTING ENGINE</p>
+    
+    <div>
+        <div class="input-wrapper">
+            <input type="tel" id="phone" placeholder="เบอร์โทรศัพท์เป้าหมาย (10 หลัก)" required maxlength="10" inputmode="numeric">
+        </div>
+        <div class="input-wrapper">
+            <input type="number" id="count" placeholder="จำนวนรอบในการทดสอบ" required inputmode="numeric">
+        </div>
+        
+        <div class="btn-group">
+            <button class="fast" onclick="startSpam('fast')">⚡ OVERDRIVE</button>
+            <button class="super" onclick="startSpam('super')">🔥 ORCHESTRA</button>
+            <button class="slow" onclick="startSpam('slow')">🐢 STEALTH</button>
+        </div>
+    </div>
+
+    <div id="log-container">>> ระบบสแตนด์บาย... รอรันคำสั่ง</div>
+
+    <div class="info-header">🔍 รายละเอียดกระบวนงาน</div>
+    <div class="info-grid">
+        <div class="info-box i-fast">
+            <h3>⚡ โหมด Overdrive (Fast)</h3>
+            <span class="badge risk-high">ความเสี่ยง: สูง 🔴</span>
+            <p>ประมวลผลผ่าน Asyncio ยิงขนานพร้อมกันความเร็วสูงสุดโดยไม่รอรอบผลลัพธ์ เหมาะสำหรับทดสอบขีดจำกัดเครือข่าย</p>
+        </div>
+
+        <div class="info-box i-super">
+            <h3>🔥 โหมด Orchestra (Super)</h3>
+            <span class="badge risk-med">ความเสี่ยง: ปานกลาง 🟡</span>
+            <p>ระบบสลับโครงสร้าง API อัจฉริยะ การันตีความสำเร็จ คัดกรองและตัดจุดเซิร์ฟเวอร์ยิงที่ขัดข้องออกโดยอัตโนมัติ</p>
+        </div>
+
+        <div class="info-box i-slow">
+            <h3>🐢 โหมด Stealth (Slow)</h3>
+            <span class="badge risk-low">ความเสี่ยง: ต่ำ 🟢</span>
+            <p>หน่วงรอบจังหวะเวลาสุ่มระหว่างคำขอ เลียนแบบการส่งผ่านสถาปัตยกรรมแบบมนุษย์ ปลอดภัยจากการบล็อกไอพีสูง</p>
+        </div>
+    </div>
+
+    <div class="credit-footer">
+        POWERED BY <span>3007X</span> CORE TEAM
+    </div>
+</div>
+
+<script>
+    let logInterval;
+    
+    function startSpam(mode) {
+        const phone = document.getElementById('phone').value;
+        const count = document.getElementById('count').value;
+        const logBox = document.getElementById('log-container');
+        
+        if (!phone || phone.length < 10) {
+            alert("❌ กรุณากรอกเบอร์โทรศัพท์ให้ครบ 10 หลัก");
+            return;
+        }
+        if (!count || count <= 0) {
+            alert("❌ กรุณากรอกจำนวนการทำงานที่ถูกต้อง");
+            return;
+        }
+        
+        let modeName = "";
+        let modeColor = "";
+        if(mode === 'fast') { modeName = "OVERDRIVE ⚡"; modeColor = "#00f2fe"; }
+        else if(mode === 'super') { modeName = "ORCHESTRA 🔥"; modeColor = "#9d4edd"; }
+        else { modeName = "STEALTH 🐢"; modeColor = "#ff3366"; }
+
+        logBox.innerHTML = `<span style="color:${modeColor}">[*] กำลังส่งผ่านคำสั่งเริ่มงานระบบโหมด ${modeName}...</span>`;
+        logBox.scrollTop = logBox.scrollHeight;
+        
+        fetch('/run', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ phone: phone, count: count, mode: mode })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                if (logInterval) clearInterval(logInterval);
+                logInterval = setInterval(fetchLogs, 500);
+            } else {
+                alert("เกิดข้อผิดพลาดจากเซิร์ฟเวอร์: " + data.message);
+                logBox.innerHTML += `\n[!] Error: ${data.message}`;
+            }
+        })
+        .catch(err => {
+            logBox.innerHTML += "\n[!] Connection Error: ไม่สามารถเชื่อมต่อฐานระบบควบคุมได้";
+        });
+    }
+    
+    function fetchLogs() {
+        fetch('/get_logs')
+        .then(response => response.json())
+        .then(logs => {
+            const logBox = document.getElementById('log-container');
+            if(logs.length > 0) {
+                let formattedLogs = logs.map(line => {
+                    if(line.includes("Error") || line.includes("ตาย") || line.includes("FAIL")) return `<span style="color:#ff5577">${line}</span>`;
+                    if(line.includes("สำเร็จ") || line.includes("Pass") || line.includes("SUCCESS")) return `<span style="color:#55ff99">${line}</span>`;
+                    return line;
+                }).join('<br>');
+                
+                logBox.innerHTML = formattedLogs; 
+                logBox.scrollTop = logBox.scrollHeight;
+            }
+        });
+    }
+</script>
+
+</body>
+              </html>
+
